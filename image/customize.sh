@@ -20,7 +20,7 @@ echo "deb http://localhost:3142/ftp.fr.debian.org/debian/ jessie main" > ${rootd
 echo "deb http://localhost:3142/ftp.fr.debian.org/debian/ jessie-backports main" >> ${rootdir}/etc/apt/sources.list
 chroot ${rootdir} apt update
 
-# apply debconf-selections before installing the packages
+# Apply debconf-selections before installing the packages
 if [ -f ${basedir}/debconf-selections ]; then
   cp ${basedir}/debconf-selections ${rootdir}/debconf-selections
   chroot ${rootdir} debconf-set-selections /debconf-selections
@@ -31,7 +31,7 @@ fi
 disable_daemons
 
 chroot ${rootdir} apt-get -q -y install openssh-server tcpdump oping fping ethtool \
-                  screen locales
+                                screen locales
 
 # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=783847
 chroot ${rootdir} apt-get -q -y -t jessie-backports install cloud-init
@@ -62,5 +62,7 @@ echo "UseDNS no" >> ${rootdir}/etc/ssh/sshd_config
 echo "virtio_pci\nvirtio_blk" >> ${rootdir}/etc/initramfs-tools/modules
 # we don't need floppy I guess
 echo "blacklist floppy" > ${rootdir}/etc/modprobe.d/floppy-blacklist.conf
+# for locale generation
+echo "en_US.UTF-8 UTF-8" >> ${rootdir}/etc/locale.gen
 
 echo "Customisation complete"
