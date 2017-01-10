@@ -1,28 +1,3 @@
-variable private_key {
-  default = "../../common/test-key"
-}
-
-variable key_pair {
-  default = "test-key"
-}
-
-variable public_pool_id {
-  default = "ec92b9e1-6d07-4a8d-901c-ebd992c31af3"
-}
-
-variable image_id {
-  default = "93490a4d-0102-4be5-833c-017fddc8898b"
-}
-
-variable flavor_id {
-  default = "1"
-}
-
-variable region {
-  default = "lab2"
-}
-
-
 resource "openstack_compute_secgroup_v2" "sg_secgroup" {
   region = "${var.region}"
   name = "sg_secgroup"
@@ -66,7 +41,7 @@ resource "openstack_compute_instance_v2" "sg_vm1" {
     uuid = "${openstack_networking_network_v2.sg_net.id}"
   }
   key_pair = "${var.key_pair}"
-  security_groups = ["sg_secgroup"]
+  security_groups = ["${openstack_compute_secgroup_v2.sg_secgroup.id}"]
 
   connection {
     host = "${self.network.0.fixed_ip_v4}"

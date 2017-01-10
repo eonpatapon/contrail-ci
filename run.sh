@@ -52,9 +52,4 @@ trap "test_failed" EXIT
 
 [[ -z $OS_AUTH_URL ]] && echo "You must source Openstack credentials" && exit 1
 
-pushd ${CI_TEST_DIR}/common > /dev/null
-    terraform apply
-    [[ ! $? -eq 0 ]] && exit 1
-popd > /dev/null
-
 next_test

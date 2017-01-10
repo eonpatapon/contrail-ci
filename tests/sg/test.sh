@@ -18,13 +18,13 @@ task_default() {
 }
 
 task_setup() {
-    runner_run terraform apply -var image_id=7fc86c31-03a1-4235-8c25-bb7558095bb4
+    retry 3 terraform apply || return 1
     port_id=$(resource_id "openstack_networking_port_v2.sg_vm2_port") || return 1
 }
 
 task_teardown() {
     runner_sequence delete_capture
-    runner_run terraform destroy -force
+    retry 3 terraform destroy -force || return 1
 }
 
 task_capture() {
