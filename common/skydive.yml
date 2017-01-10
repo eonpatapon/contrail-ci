@@ -1,0 +1,6 @@
+agent:
+    analyzers: d-ocnclc-0000.adm.lab2.aub.cloudwatt.net:8182
+  
+logging:
+    default: DEBUG
+
