@@ -13,7 +13,7 @@ declare -g port_id
 declare -g tracking_id
 
 task_default() {
-	runner_sequence setup capture can_ping_backend delete_capture delete_router capture cannot_ping_backend
+    runner_sequence setup capture can_ping_backend delete_capture delete_router capture cannot_ping_backend
     result=${?}
     runner_sequence teardown 
     return $result
@@ -34,8 +34,8 @@ task_teardown() {
 
 task_capture() {
     capture_id=$(capture "G.V().Has('Neutron/PortID', '${port_id}')") || return 1
-	# wait a bit to collect some data
-	sleep 7
+    # wait a bit to collect some data
+    sleep 7
 }
 
 task_delete_capture() {
@@ -43,7 +43,7 @@ task_delete_capture() {
 }
 
 task_can_ping_backend() {
-	result=$(gremlin "G.V().Has('Neutron/PortID', '$port_id').Flows().Has('Application', 'ICMPv4')") || return 1
+    result=$(gremlin "G.V().Has('Neutron/PortID', '$port_id').Flows().Has('Application', 'ICMPv4')") || return 1
     tracking_id=$(echo $result | jq -r '.[].TrackingID')
     if [[ -z $tracking_id ]]; then
         runner_log_error "No flow found"
@@ -52,12 +52,12 @@ task_can_ping_backend() {
         runner_log_success "Found expected flow with TrackingID ${tracking_id}"
     fi
     both_sides=$(echo $result | jq '.[].Metric | has("ABPackets") and has("BAPackets")')
-	if [[ $both_sides == "false" ]] || [[ $both_sides == "" ]]; then
-		runner_log_error "Ping doesn't work. No reply from backend."
-		return 1
+    if [[ $both_sides == "false" ]] || [[ $both_sides == "" ]]; then
+        runner_log_error "Ping doesn't work. No reply from backend."
+        return 1
     else
         runner_log_success "Reply to ping found"
-	fi
+    fi
 }
 
 task_delete_router() {
@@ -74,10 +74,10 @@ task_cannot_ping_backend() {
         runner_log_success "Found expected flow with TrackingID ${tracking_id}"
     fi
     both_sides=$(echo $result | jq '.[].Metric | has("ABPackets") and has("BAPackets")')
-	if [[ $both_sides == "true" ]] || [[ $both_sides == "" ]]; then
-		runner_log_error "Ping still works ?!"
-		return 1
+    if [[ $both_sides == "true" ]] || [[ $both_sides == "" ]]; then
+        runner_log_error "Ping still works ?!"
+        return 1
     else
         runner_log_success "No reply to ping found"
-	fi
+    fi
 }
