@@ -4,6 +4,8 @@ Setup
 Install skydive in the path. 
 Prebuilt binaires are available at https://github.com/skydive-project/skydive-binaries.
 
+Install terraform 0.8.
+
 Source openstack credentials for lab2.
 
 Usage
@@ -19,9 +21,5 @@ Run a specific test:
 
 or
 
-    # must be done only once
-    cd common/
-    terraform apply
-     
     cd tests/sg/
     ./test.sh
