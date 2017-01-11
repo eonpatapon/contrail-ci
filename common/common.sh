@@ -1,11 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 
 export CI_COMMON_DIR=$(pwd)/$(dirname $BASH_SOURCE)
 
 check_binary() {
-    which $1 > /dev/null
+    type -P $1 > /dev/null
 }
 
 gremlin() {
