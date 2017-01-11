@@ -13,7 +13,7 @@ declare -g port_id
 declare -g tracking_id
 
 task_default() {
-    runner_sequence setup capture can_ping_backend delete_capture delete_router capture cannot_ping_backend
+    runner_sequence setup capture can_ping_backend delete_router cannot_ping_backend
     result=${?}
     runner_sequence teardown 
     return $result
@@ -66,18 +66,22 @@ task_delete_router() {
 }
 
 task_cannot_ping_backend() {
-    result=$(gremlin "G.V().Has('Neutron/PortID', '$port_id').Flows().Has('Application', 'ICMPv4')") || return 1
-    if [[ $tracking_id != $(echo $result | jq -r '.[].TrackingID') ]]; then
-        runner_log_error "Can't find the flow"
-        return 1
-    else
-        runner_log_success "Found expected flow with TrackingID ${tracking_id}"
-    fi
-    both_sides=$(echo $result | jq '.[].Metric | has("ABPackets") and has("BAPackets")')
-    if [[ $both_sides == "true" ]] || [[ -z $both_sides ]]; then
-        runner_log_error "Ping still works ?!"
-        return 1
-    else
+    local -r flow1=$(gremlin "G.V().Has('Neutron/PortID', '$port_id').Flows().Has('TrackingID', '${tracking_id}')") || return 1
+    local -i flow1AB=$(echo $flow1 | jq -r '.[].Metric.ABPackets')
+    local -i flow1BA=$(echo $flow1 | jq -r '.[].Metric.BAPackets')
+    runner_log_notice "Flow has $flow1AB ABPackets and $flow1BA BAPackets"
+    sleep 3
+    local -r flow2=$(gremlin "G.V().Has('Neutron/PortID', '$port_id').Flows().Has('TrackingID', '${tracking_id}')") || return 1
+    local -i flow2AB=$(echo $flow2 | jq -r '.[].Metric.ABPackets')
+    local -i flow2BA=$(echo $flow2 | jq -r '.[].Metric.BAPackets')
+    runner_log_notice "Flow has now $flow2AB ABPackets and $flow2BA BAPackets"
+
+    if [[ $flow2AB -gt $flow1AB ]] && [[ $flow2BA -eq $flow1BA ]]; then
         runner_log_success "No reply to ping found"
+    elif [[ $flow2AB -eq $flow1AB ]] && [[ $flow2BA -gt $flow1BA ]]; then
+        runner_log_success "No reply to ping found"
+    else
+        runner_log_error "Ping shouldn't work between VMs"
+        return 1
     fi
 }
