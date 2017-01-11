@@ -6,6 +6,8 @@ Prebuilt binaires are available at https://github.com/skydive-project/skydive-bi
 
 Install terraform 0.8.
 
+Install jq >= 0.3.
+
 Source openstack credentials for lab2.
 
 Usage

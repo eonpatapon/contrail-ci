@@ -32,7 +32,7 @@ delete_capture() {
 
 resource_id() {
     local name=$1
-    local id=$(cat terraform.tfstate | jq -r ".modules[].resources.\"${name}\".primary.id")
+    local id=$(cat terraform.tfstate | jq -r ".modules[].resources[\"${name}\"].primary.id")
     if [[ -z $id ]] || [[ $id == "null" ]]; then
 		>&2 runner_log_error "Can't find $name id in terraform state"
         return 1
@@ -62,3 +62,4 @@ retry() {
 }
 
 check_binary skydive
+check_binary jq
