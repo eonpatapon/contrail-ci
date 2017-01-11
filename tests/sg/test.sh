@@ -46,10 +46,17 @@ task_should_see_ping_on_both_ends() {
     local -r result=$(gremlin "G.V().Has('Neutron/PortID', '$port_id').Flows().Has('Application', 'ICMPv4')") || return 1
     local -r both_sides=$(echo $result | jq '.[].Metric | has("ABPackets") and has("BAPackets")')
     tracking_id=$(echo $result | jq -r '.[].TrackingID')
-    runner_log_success "Found expected flow with TrackingID ${tracking_id}"
+    if [[ -z $tracking_id ]]; then
+        runner_log_error "No flow found"
+        return 1
+    else
+        runner_log_success "Found expected flow with TrackingID ${tracking_id}"
+    fi
     if [[ $both_sides == "false" ]] || [[ $both_sides == "" ]]; then
         runner_log_error "Ping doesn't work between VMs"
         return 1
+    else
+        runner_log_success "Reply to ping found"
     fi
 }
 
@@ -65,6 +72,8 @@ task_should_not_see_ping_on_both_ends() {
     if [[ $both_sides == "true" ]] || [[ $both_sides == "" ]]; then
         runner_log_error "Ping shouldn't work between VMs"
         return 1
+    else
+        runner_log_success "No reply to ping found"
     fi
 }
 
