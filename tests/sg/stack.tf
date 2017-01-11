@@ -38,13 +38,12 @@ resource "openstack_compute_instance_v2" "sg_vm1" {
   image_id = "${var.image_id}"
   flavor_id = "${var.flavor_id}"
   network {
-    uuid = "${openstack_networking_network_v2.sg_net.id}"
+    port = "${openstack_networking_port_v2.sg_vm1_port.id}"
   }
   key_pair = "${var.key_pair}"
-  security_groups = ["${openstack_compute_secgroup_v2.sg_secgroup.id}"]
 
   connection {
-    host = "${self.network.0.fixed_ip_v4}"
+    host = "${openstack_networking_port_v2.sg_vm1_port.fixed_ip.0.ip_address}"
     type = "ssh"
     user = "cloud"
     private_key = "${file(var.private_key)}"
@@ -62,6 +61,16 @@ resource "openstack_compute_instance_v2" "sg_vm1" {
       // http://stackoverflow.com/questions/36207752/how-can-i-start-a-remote-service-using-terraform-provisioning
       "sleep 1",
     ]
+  }
+}
+
+resource "openstack_networking_port_v2" "sg_vm1_port" {
+  network_id = "${openstack_networking_network_v2.sg_net.id}"
+  admin_state_up = "true"
+  security_group_ids = ["${openstack_compute_secgroup_v2.sg_secgroup.id}"]
+  region = "${var.region}"
+  fixed_ip {
+    subnet_id = "${openstack_networking_subnet_v2.sg_subnet.id}"
   }
 }
 
