@@ -73,7 +73,6 @@ resource "openstack_compute_instance_v2" "hr_bastion" {
     port = "${openstack_networking_port_v2.hr_bastion_port.id}"
   }
   key_pair = "${var.key_pair}"
-  security_groups = ["hr_secgroup_icmp_ssh"]
 
   connection {
     host = "${openstack_networking_floatingip_v2.hr_bastion_fip.address}"
@@ -127,9 +126,7 @@ resource "openstack_compute_instance_v2" "hr_router" {
   network = {
     port = "${openstack_networking_port_v2.hr_router_port_backend.id}"
   }
-
   key_pair = "${var.key_pair}"
-  security_groups = ["hr_secgroup_icmp_ssh"]
 
   connection {
     host = "${openstack_networking_port_v2.hr_router_port_bastion.fixed_ip.0.ip_address}"
@@ -170,9 +167,7 @@ resource "openstack_compute_instance_v2" "hr_backend" {
   network = {
     port = "${openstack_networking_port_v2.hr_backend_port.id}"
   }
-
   key_pair = "${var.key_pair}"
-  security_groups = ["hr_secgroup_icmp_ssh"]
 }
 
 resource "null_resource" "add_host_routes" {
