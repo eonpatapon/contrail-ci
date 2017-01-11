@@ -5,7 +5,7 @@ set -e
 export CI_COMMON_DIR=$(pwd)/$(dirname $BASH_SOURCE)
 
 check_binary() {
-    type -P $1 > /dev/null
+    type -P $1 > /dev/null || (echo "error: $1 is not in your PATH"; exit 1)
 }
 
 gremlin() {
