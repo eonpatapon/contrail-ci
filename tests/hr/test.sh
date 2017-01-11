@@ -52,7 +52,7 @@ task_can_ping_backend() {
         runner_log_success "Found expected flow with TrackingID ${tracking_id}"
     fi
     both_sides=$(echo $result | jq '.[].Metric | has("ABPackets") and has("BAPackets")')
-    if [[ $both_sides == "false" ]] || [[ $both_sides == "" ]]; then
+    if [[ $both_sides == "false" ]] || [[ -z $both_sides ]]; then
         runner_log_error "Ping doesn't work. No reply from backend."
         return 1
     else
@@ -74,7 +74,7 @@ task_cannot_ping_backend() {
         runner_log_success "Found expected flow with TrackingID ${tracking_id}"
     fi
     both_sides=$(echo $result | jq '.[].Metric | has("ABPackets") and has("BAPackets")')
-    if [[ $both_sides == "true" ]] || [[ $both_sides == "" ]]; then
+    if [[ $both_sides == "true" ]] || [[ -z $both_sides ]]; then
         runner_log_error "Ping still works ?!"
         return 1
     else

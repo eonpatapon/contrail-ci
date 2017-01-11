@@ -52,7 +52,7 @@ task_should_see_ping_on_both_ends() {
         runner_log_success "Found expected flow with TrackingID ${tracking_id}"
     fi
     local -r both_sides=$(echo $result | jq '.[].Metric | has("ABPackets") and has("BAPackets")')
-    if [[ $both_sides == "false" ]] || [[ $both_sides == "" ]]; then
+    if [[ $both_sides == "false" ]] || [[ -z $both_sides ]]; then
         runner_log_error "Ping doesn't work between VMs"
         return 1
     else
