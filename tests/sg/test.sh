@@ -5,7 +5,6 @@ set -e
 source ../../common/common.sh
 source ../../common/runner.sh
 
-check_binary neutron
 check_binary terraform
 
 declare -g capture_id
@@ -60,6 +59,10 @@ task_should_see_ping_on_both_ends() {
     fi
 }
 
+task_remove_sg_rule() {
+    retry 3 terraform apply -target=openstack_compute_secgroup_v2.sg_secgroup remove-sg-rule || return 1
+}
+
 task_should_not_see_ping_on_both_ends() {
     local -r flow1=$(gremlin "G.V().Has('Neutron/PortID', '$port_id').Flows().Has('TrackingID', '${tracking_id}')") || return 1
     local -i flow1AB=$(echo $flow1 | jq -r '.[].Metric.ABPackets')
@@ -79,9 +82,4 @@ task_should_not_see_ping_on_both_ends() {
         runner_log_error "Ping shouldn't work between VMs"
         return 1
     fi
-}
-
-task_remove_sg_rule() {
-    uuid=$(neutron security-group-rule-list | grep 'sg_secgroup' | grep 'ingress' | grep 'icmp' | cut -d'|' -f2)
-    runner_run neutron security-group-rule-delete $uuid
 }
