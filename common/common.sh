@@ -10,14 +10,17 @@ check_binary() {
 
 gremlin() {
     local query=$1
+    >&2 runner_log_notice "Sending query : $query"
     local result=$(skydive -c ${CI_COMMON_DIR}/skydive.yml client topology query --gremlin "$1") || return 1
-    >&2 runner_log_notice $result
+    >&2 runner_log_notice "Query result : $result"
     echo $result
 }
 
 capture() {
     local desc=${2:-"CI test"}
-    local capture_id=$(skydive -c ${CI_COMMON_DIR}/skydive.yml client capture create --description "$desc" --gremlin "$1" | jq -r '.UUID')
+    local capture=$(skydive -c ${CI_COMMON_DIR}/skydive.yml client capture create --description "$desc" --gremlin "$1")
+    >&2 runner_log_notice "Capture result : $capture"
+    local capture_id=$(echo $capture | jq -r '.UUID')
     if [[ -z $capture_id ]]; then
 		>&2 runner_log_error "Capture wasn't properly started"
         return 1
@@ -27,7 +30,10 @@ capture() {
 
 delete_capture() {
     local capture_id=$1
-    [ ! -z $capture_id ] && skydive -c ${CI_COMMON_DIR}/skydive.yml client capture delete $capture_id || return
+    if [ ! -z $capture_id ]; then 
+        skydive -c ${CI_COMMON_DIR}/skydive.yml client capture delete $capture_id || return
+        >&2 runner_log_notice "Capture ${capture_id} deleted"
+    fi
 }
 
 resource_id() {
@@ -38,6 +44,17 @@ resource_id() {
         return 1
     fi
     echo $id
+}
+
+fuzzy_resource_ids() {
+    local name=$1
+    local matches=$(cat terraform.tfstate | jq -r ".modules[].resources | keys[] | select(contains(\"${name}\"))")
+    for match in $matches
+    do
+        local id=$(resource_id ${match}) || return 1
+        echo -n "${id} "
+    done
+    echo
 }
 
 # Retries a command on failure.
