@@ -57,6 +57,12 @@ fuzzy_resource_ids() {
     echo
 }
 
+port_interface_name() {
+    local name=$1
+    local port_id=$(resource_id "openstack_networking_port_v2.${name}") || return 1
+    echo tap${port_id:0:11}
+}
+
 # Retries a command on failure.
 # $1 - the max number of attempts
 # $2... - the command to run

@@ -11,9 +11,9 @@ declare -g capture_ids
 declare -g port_ids
 
 task_default() {
-    runner_sequence setup capture can_ping_google 
+    runner_sequence setup capture can_ping_google
     result=${?}
-    runner_sequence teardown 
+    runner_sequence teardown
     return $result
 }
 
