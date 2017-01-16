@@ -63,6 +63,30 @@ port_interface_name() {
     echo tap${port_id:0:11}
 }
 
+# Wait for skydive flow.
+# $1 - number of seconds to wait
+# $2 - the gremlin query
+wait_flow() {
+    local -r -i max_attempts=$1
+    local -r query=$2
+    for attempt_num in $(seq 1 $max_attempts)
+	do
+        local -i nb_flows=$(2>/dev/null gremlin "${query}" | jq -r '. | length')
+		if (( attempt_num == max_attempts )); then
+            >&2 runner_log_error "No flow found for ${query} in ${max_attempts}s, aborting..."
+            return 1
+        elif (( nb_flows == 0 )); then
+            >&2 runner_log_notice "No flow found for ${query} in ${attempt_num}s"
+            sleep 1
+        else
+            >&2 runner_log_notice "Flow found for ${query}"
+            break
+        fi
+	done
+    local result=$(gremlin "${query}") || return 1
+    echo $result
+}
+
 # Retries a command on failure.
 # $1 - the max number of attempts
 # $2... - the command to run

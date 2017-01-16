@@ -34,8 +34,6 @@ task_teardown() {
 task_capture() {
     itf_name=$(port_interface_name "hr_bastion_port") || return 1
     capture_id=$(capture "G.V().Has('Name', '${itf_name}')") || return 1
-    # wait a bit to collect some data
-    sleep 7
 }
 
 task_delete_capture() {
@@ -43,7 +41,7 @@ task_delete_capture() {
 }
 
 task_can_ping_backend() {
-    result=$(gremlin "G.V().Has('Name', '${itf_name}').Flows().Has('Application', 'ICMPv4')") || return 1
+    result=$(wait_flow 20 "G.V().Has('Name', '${itf_name}').Flows().Has('Application', 'ICMPv4')") || return 1
     tracking_id=$(echo $result | jq -r '.[].TrackingID')
     if [[ -z $tracking_id ]]; then
         runner_log_error "No flow found"

@@ -64,5 +64,7 @@ echo "virtio_pci\nvirtio_blk" >> ${rootdir}/etc/initramfs-tools/modules
 echo "blacklist floppy" > ${rootdir}/etc/modprobe.d/floppy-blacklist.conf
 # for locale generation
 echo "en_US.UTF-8 UTF-8" >> ${rootdir}/etc/locale.gen
+# for HR test
+echo "net.ipv4.ip_forward=1" >> ${rootdir}/etc/sysctl.conf
 
 echo "Customisation complete"

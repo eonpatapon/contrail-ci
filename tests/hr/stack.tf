@@ -73,23 +73,7 @@ resource "openstack_compute_instance_v2" "hr_bastion" {
     port = "${openstack_networking_port_v2.hr_bastion_port.id}"
   }
   key_pair = "${var.key_pair}"
-
-  connection {
-    host = "${openstack_networking_floatingip_v2.hr_bastion_fip.address}"
-    type = "ssh"
-    user = "cloud"
-    private_key = "${file(var.private_key)}"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "ip a",
-      "ip r",
-      "screen -d -m ping ${openstack_networking_port_v2.hr_backend_port.fixed_ip.0.ip_address}",
-      // http://stackoverflow.com/questions/36207752/how-can-i-start-a-remote-service-using-terraform-provisioning
-      "sleep 1",
-    ]
-  }
+  user_data = "#!/bin/bash\n\nscreen -d -m ping ${openstack_networking_port_v2.hr_backend_port.fixed_ip.0.ip_address}"
 }
 
 resource "openstack_networking_port_v2" "hr_router_port_bastion" {
@@ -127,24 +111,6 @@ resource "openstack_compute_instance_v2" "hr_router" {
     port = "${openstack_networking_port_v2.hr_router_port_backend.id}"
   }
   key_pair = "${var.key_pair}"
-
-  connection {
-    host = "${openstack_networking_port_v2.hr_router_port_bastion.fixed_ip.0.ip_address}"
-    type = "ssh"
-    user = "cloud"
-    private_key = "${file(var.private_key)}"
-    bastion_host = "${openstack_networking_floatingip_v2.hr_bastion_fip.address}"
-    bastion_user = "cloud"
-    bastion_private_key = "${file(var.private_key)}"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "ip a",
-      "ip r",
-      "sudo sh -c 'echo 1 > /proc/sys/net/ipv4/ip_forward'",
-    ]
-  }
 }
 
 resource "openstack_networking_port_v2" "hr_backend_port" {

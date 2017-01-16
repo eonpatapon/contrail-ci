@@ -32,9 +32,7 @@ task_teardown() {
 
 task_capture() {
     itf_name=$(port_interface_name "sg_vm1_port") || return 1
-    capture_id=$(capture "G.V().Has('Name', '${itf_name}')") || return 1
-    # wait a bit to collect some data
-    sleep 5
+    capture_id=$(capture "G.V().Has('Name', '${itf_name}')" "SG test") || return 1
 }
 
 task_delete_capture() {
@@ -42,7 +40,7 @@ task_delete_capture() {
 }
 
 task_should_see_ping_on_both_ends() {
-    local -r result=$(gremlin "G.V().Has('Name', '$itf_name').Flows().Has('Application', 'ICMPv4')") || return 1
+    local -r result=$(wait_flow 20 "G.V().Has('Name', '$itf_name').Flows().Has('Application', 'ICMPv4')") || return 1
     tracking_id=$(echo $result | jq -r '.[].TrackingID')
     if [[ -z $tracking_id ]]; then
         runner_log_error "No flow found"
