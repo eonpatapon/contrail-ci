@@ -11,7 +11,7 @@ variable public_pool_id {
 }
 
 variable image_id {
-  default = "b2b6f0da-fe4b-4009-b730-506ec6a3d561"
+  default = "3dc0ed38-943a-47c9-aa11-acde51bdad3f"
 }
 
 variable flavor_id {

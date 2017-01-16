@@ -17,7 +17,6 @@ rm ${rootdir}/etc/apt/sources.list.d/base.list
 
 # Prepare apt for installing packages in the chroot
 echo "deb http://localhost:3142/ftp.fr.debian.org/debian/ jessie main" > ${rootdir}/etc/apt/sources.list
-echo "deb http://localhost:3142/ftp.fr.debian.org/debian/ jessie-backports main" >> ${rootdir}/etc/apt/sources.list
 chroot ${rootdir} apt update
 
 # Apply debconf-selections before installing the packages
@@ -31,10 +30,7 @@ fi
 disable_daemons
 
 chroot ${rootdir} apt-get -q -y install openssh-server tcpdump oping fping ethtool iperf iperf3 \
-                                screen locales
-
-# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=783847
-chroot ${rootdir} apt-get -q -y -t jessie-backports install cloud-init
+                                screen locales cloud-init
 
 # remove previously added sources
 rm ${rootdir}/etc/apt/sources.list
@@ -64,6 +60,8 @@ echo "virtio_pci\nvirtio_blk" >> ${rootdir}/etc/initramfs-tools/modules
 echo "blacklist floppy" > ${rootdir}/etc/modprobe.d/floppy-blacklist.conf
 # for locale generation
 echo "en_US.UTF-8 UTF-8" >> ${rootdir}/etc/locale.gen
+# reduce grub timeout
+sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/' ${rootdir}/etc/default/grub
 # for HR test
 echo "net.ipv4.ip_forward=1" >> ${rootdir}/etc/sysctl.conf
 
