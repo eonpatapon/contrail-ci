@@ -30,7 +30,7 @@ fi
 # prevents apt to start daemons in the chroot
 disable_daemons
 
-chroot ${rootdir} apt-get -q -y install openssh-server tcpdump oping fping ethtool \
+chroot ${rootdir} apt-get -q -y install openssh-server tcpdump oping fping ethtool iperf iperf3 \
                                 screen locales
 
 # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=783847
