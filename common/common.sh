@@ -2,23 +2,36 @@
 
 set -e
 
+[[ -z ${OS_REGION_NAME} ]] && echo "OS_REGION_NAME is empty" && return 1
+
 export CI_COMMON_DIR=$(pwd)/$(dirname $BASH_SOURCE)
+export CI_ENVS_DIR=${CI_COMMON_DIR}/../envs
+export CI_SKYDIVE_CONF=${CI_ENVS_DIR}/${OS_REGION_NAME}-skydive.yml
+export CI_TERRAFORM_VARS=${CI_ENVS_DIR}/${OS_REGION_NAME}.tfvars
 
 check_binary() {
     type -P $1 > /dev/null || (echo "error: $1 is not in your PATH"; exit 1)
 }
 
+terrapply() {
+    retry 3 terraform apply -var-file=${CI_TERRAFORM_VARS} $@ || return 1
+}
+
+terradestroy() {
+    retry 3 terraform destroy -var-file=${CI_TERRAFORM_VARS} -force || return 1
+}
+
 gremlin() {
     local query=$1
     >&2 runner_log_notice "Sending query : $query"
-    local result=$(skydive -c ${CI_COMMON_DIR}/skydive.yml client topology query --gremlin "$1") || return 1
+    local result=$(skydive -c ${CI_SKYDIVE_CONF} client topology query --gremlin "$1") || return 1
     >&2 runner_log_notice "Query result : $result"
     echo $result
 }
 
 capture() {
     local desc=${2:-"CI test"}
-    local capture=$(skydive -c ${CI_COMMON_DIR}/skydive.yml client capture create --description "$desc" --gremlin "$1")
+    local capture=$(skydive -c ${CI_SKYDIVE_CONF} client capture create --description "$desc" --gremlin "$1")
     >&2 runner_log_notice "Capture result : $capture"
     local capture_id=$(echo $capture | jq -r '.UUID')
     if [[ -z $capture_id ]]; then
@@ -30,8 +43,8 @@ capture() {
 
 delete_capture() {
     local capture_id=$1
-    if [ ! -z $capture_id ]; then 
-        skydive -c ${CI_COMMON_DIR}/skydive.yml client capture delete $capture_id || return
+    if [ ! -z $capture_id ]; then
+        skydive -c ${CI_SKYDIVE_CONF} client capture delete $capture_id || return
         >&2 runner_log_notice "Capture ${capture_id} deleted"
     fi
 }
@@ -110,3 +123,4 @@ retry() {
 
 check_binary skydive
 check_binary jq
+check_binary terraform

@@ -5,8 +5,6 @@ set -e
 source ../../common/common.sh
 source ../../common/runner.sh
 
-check_binary terraform
-
 declare -g capture_id
 declare -g itf_name
 declare -g tracking_id
@@ -19,11 +17,11 @@ task_default() {
 }
 
 task_setup() {
-    retry 3 terraform apply || return 1
+    terrapply || return 1
 }
 
 task_destroy() {
-    retry 3 terraform destroy -force || return 1
+    terradestroy || return 1
 }
 
 task_teardown() {
@@ -58,7 +56,7 @@ task_should_see_ping_on_both_ends() {
 }
 
 task_remove_sg_rule() {
-    retry 3 terraform apply -target=openstack_compute_secgroup_v2.sg_secgroup remove-sg-rule || return 1
+    terrapply -target=openstack_compute_secgroup_v2.sg_secgroup remove-sg-rule || return 1
 }
 
 task_should_not_see_ping_on_both_ends() {

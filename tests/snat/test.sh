@@ -5,8 +5,6 @@ set -e
 source ../../common/common.sh
 source ../../common/runner.sh
 
-check_binary terraform
-
 declare -g capture_ids
 declare -g itf_names
 
@@ -18,11 +16,11 @@ task_default() {
 }
 
 task_setup() {
-    retry 3 terraform apply || return 1
+    terrapply || return 1
 }
 
 task_destroy() {
-    retry 3 terraform destroy -force || return 1
+    terradestroy || return 1
 }
 
 task_teardown() {
