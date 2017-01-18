@@ -4,7 +4,7 @@ set -e
 
 cd $(dirname $0)
 CI_TEST_DIR=$(pwd)
-declare -a CI_TESTS=(${1:-$(ls $CI_TEST_DIR/tests)})
+declare -a CI_TESTS=(${@:-$(ls $CI_TEST_DIR/tests)})
 declare -a CI_TESTS_RESULTS=()
 CI_TEST_INDEX=-1
 CI_CURRENT_TEST=
