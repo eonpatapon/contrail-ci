@@ -76,6 +76,16 @@ port_interface_name() {
     echo tap${port_id:0:11}
 }
 
+port_fixed_ip() {
+    local name=$1
+    local fixed_ip=$(cat terraform.tfstate | jq -r ".modules[].resources[\"openstack_networking_port_v2.${name}\"].primary.attributes[\"fixed_ip.0.ip_address\"]")
+    if [[ -z $fixed_ip ]] || [[ $fixed_ip == "null" ]]; then
+        >&2 runner_log_error "Can't find $name IP in terraform state"
+        return 1
+    fi
+    echo $fixed_ip
+}
+
 # Wait for skydive flow.
 # $1 - number of seconds to wait
 # $2 - the gremlin query

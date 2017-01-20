@@ -1,0 +1,54 @@
+#cloud-config
+
+bootcmd:
+  - ip r del default via 10.66.0.200
+
+package_update: true
+packages:
+  - iptables
+  - keepalived
+
+runcmd:
+  - iptables -t nat -A POSTROUTING -s 10.66.0.0/16 -j MASQUERADE
+  - systemctl keepalived restart
+
+write_files:
+  - content: |
+        vrrp_instance VIPAdmin {
+            interface eth0
+            state BACKUP
+            virtual_router_id 44
+            priority 51
+            use_vmac vrrp44
+            vmac_xmit_base
+
+            virtual_ipaddress {
+                10.44.0.200
+            }
+
+            notify_master "/root/vrrp_sysctl.sh vrrp44"
+        }
+
+        vrrp_instance VIPBackend {
+            interface eth1
+            state BACKUP 
+            virtual_router_id 66
+            priority 51
+            use_vmac vrrp66
+            vmac_xmit_base
+
+            virtual_ipaddress {
+                10.66.0.200
+            }
+
+            notify_master "/root/vrrp_sysctl.sh vrrp66"
+        }
+    path: /etc/keepalived/keepalived.conf
+    permissions: 644
+  - content: |
+        #!/bin/bash
+
+        echo 0 > /proc/sys/net/ipv4/conf/all/rp_filter
+        echo 0 > /proc/sys/net/ipv4/conf/$1/rp_filter
+    path: /root/vrrp_sysctl.sh
+    permissions: 755
