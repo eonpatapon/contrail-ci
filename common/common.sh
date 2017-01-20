@@ -24,7 +24,7 @@ terradestroy() {
 gremlin() {
     local query=$1
     >&2 runner_log_notice "Sending query : $query"
-    local result=$(skydive -c ${CI_SKYDIVE_CONF} client topology query --gremlin "$1") || return 1
+    result=$(skydive -c ${CI_SKYDIVE_CONF} client topology query --gremlin "$1") || return 1
     >&2 runner_log_notice "Query result : $result"
     echo $result
 }
@@ -64,7 +64,7 @@ fuzzy_resource_ids() {
     local matches=$(cat terraform.tfstate | jq -r ".modules[].resources | keys[] | select(contains(\"${name}\"))")
     for match in $matches
     do
-        local id=$(resource_id ${match}) || return 1
+        id=$(resource_id ${match}) || return 1
         echo -n "${id} "
     done
     echo
@@ -72,31 +72,33 @@ fuzzy_resource_ids() {
 
 port_interface_name() {
     local name=$1
-    local port_id=$(resource_id "openstack_networking_port_v2.${name}") || return 1
+    port_id=$(resource_id "openstack_networking_port_v2.${name}") || return 1
     echo tap${port_id:0:11}
 }
 
 # Wait for skydive flow.
 # $1 - number of seconds to wait
 # $2 - the gremlin query
+# Returns flow
 wait_flow() {
     local -r -i max_attempts=$1
     local -r query=$2
-    for attempt_num in $(seq 1 $max_attempts)
+    >&2 runner_log_notice "Polling for flow ${query} during ${max_attempts}s..."
+    for attempt_num in $(seq $max_attempts)
 	do
         local -i nb_flows=$(2>/dev/null gremlin "${query}" | jq -r '. | length')
 		if (( attempt_num == max_attempts )); then
-            >&2 runner_log_error "No flow found for ${query} in ${max_attempts}s, aborting..."
+            >&2 runner_log_error "No flow found in ${max_attempts}s, aborting..."
             return 1
         elif (( nb_flows == 0 )); then
-            >&2 runner_log_notice "No flow found for ${query} in ${attempt_num}s"
+            >&2 runner_log_notice "No flow found in ${attempt_num}s"
             sleep 1
         else
-            >&2 runner_log_notice "Flow found for ${query}"
+            >&2 runner_log_notice "Flow found"
             break
         fi
 	done
-    local result=$(gremlin "${query}") || return 1
+    result=$(gremlin "${query}") || return 1
     echo $result
 }
 

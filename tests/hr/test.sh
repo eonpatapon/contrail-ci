@@ -40,21 +40,9 @@ task_delete_capture() {
 }
 
 task_can_ping_backend() {
-    result=$(wait_flow 20 "G.V().Has('Name', '${itf_name}').Flows().Has('Application', 'ICMPv4')") || return 1
-    tracking_id=$(echo $result | jq -r '.[].TrackingID')
-    if [[ -z $tracking_id ]]; then
-        runner_log_error "No flow found"
-        return 1
-    else
-        runner_log_success "Found expected flow with TrackingID ${tracking_id}"
-    fi
-    both_sides=$(echo $result | jq '.[].Metric | has("ABPackets") and has("BAPackets")')
-    if [[ $both_sides == "false" ]] || [[ -z $both_sides ]]; then
-        runner_log_error "Ping doesn't work. No reply from backend."
-        return 1
-    else
-        runner_log_success "Reply to ping found"
-    fi
+    flow=$(wait_flow 20 "G.V().Has('Name', '${itf_name}').Flows().Has('Application', 'ICMPv4').Has('Metric.ABPackets', GT(0)).Has('Metric.BAPackets', GT(0))") || return 1
+    tracking_id=$(echo "${flow}" | jq -r '.[].TrackingID')
+    runner_log_success "Found expected flow with TrackingID ${tracking_id}"
 }
 
 task_delete_router() {
@@ -63,12 +51,12 @@ task_delete_router() {
 }
 
 task_cannot_ping_backend() {
-    local -r flow1=$(gremlin "G.V().Has('Name', '$itf_name').Flows().Has('TrackingID', '${tracking_id}')") || return 1
+    flow1=$(gremlin "G.V().Has('Name', '$itf_name').Flows().Has('TrackingID', '${tracking_id}')") || return 1
     local -i flow1AB=$(echo $flow1 | jq -r '.[].Metric.ABPackets')
     local -i flow1BA=$(echo $flow1 | jq -r '.[].Metric.BAPackets')
     runner_log_notice "Flow has $flow1AB ABPackets and $flow1BA BAPackets"
     sleep 3
-    local -r flow2=$(gremlin "G.V().Has('Name', '$itf_name').Flows().Has('TrackingID', '${tracking_id}')") || return 1
+    flow2=$(gremlin "G.V().Has('Name', '$itf_name').Flows().Has('TrackingID', '${tracking_id}')") || return 1
     local -i flow2AB=$(echo $flow2 | jq -r '.[].Metric.ABPackets')
     local -i flow2BA=$(echo $flow2 | jq -r '.[].Metric.BAPackets')
     runner_log_notice "Flow has now $flow2AB ABPackets and $flow2BA BAPackets"

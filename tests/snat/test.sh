@@ -28,11 +28,11 @@ task_teardown() {
 }
 
 task_capture() {
-    local -r port_ids=$(fuzzy_resource_ids "openstack_networking_port_v2.snat_client_port") || return 1
+    port_ids=$(fuzzy_resource_ids "openstack_networking_port_v2.snat_client_port") || return 1
     for port_id in $port_ids
     do
         local itf_name="tap${port_id:0:11}"
-        local capture_id=$(capture "G.V().Has('Name', '${itf_name}')" "SNAT test") || return 1
+        capture_id=$(capture "G.V().Has('Name', '${itf_name}')" "SNAT test") || return 1
         capture_ids="${capture_ids} ${capture_id}"
         itf_names="${itf_names} ${itf_name}"
     done
@@ -41,16 +41,7 @@ task_capture() {
 task_can_ping_google() {
     for itf_name in $itf_names
     do
-        local flow=$(wait_flow 20 "G.V().Has('Name', '${itf_name}').Flows().Has('Application', 'ICMPv4')")
-        local -i flowAB=$(echo $flow | jq -r '.[].Metric.ABPackets')
-        local -i flowBA=$(echo $flow | jq -r '.[].Metric.BAPackets')
-        runner_log_notice "Flow has $flowAB ABPackets and $flowBA BAPackets"
-        if [[ $flowAB -gt 0 ]] && [[ $flowBA -gt 0 ]]; then
-            runner_log_success "Reply to ping found"
-        else
-            runner_log_error "No reply to ping found"
-            return 1
-        fi
+        flow=$(wait_flow 20 "G.V().Has('Name', '${itf_name}').Flows().Has('Application', 'ICMPv4').Has('Metric.ABPackets', GT(0)).Has('Metric.BAPackets', GT(0))") || return 1
     done
 }
 
