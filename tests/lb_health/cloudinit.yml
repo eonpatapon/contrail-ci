@@ -1,0 +1,55 @@
+#cloud-config
+
+user: cloud
+ssh_pwauth: no
+chpasswd:
+    list: |
+        root:cloud
+        cloud:cloud
+    expire: False
+
+package_update: true
+package_upgrade: true
+package_reboot_if_required: false
+
+packages:
+  - tmux
+  - curl
+  - apache2
+
+final_message: "!!! Instance booted !!! (cloudinit runs in $UPTIME seconds)"
+
+output: {all: '| tee -a /var/log/cloud-init-output.log'}
+
+runcmd:
+  - [ sh, -xc, "su cloud -c 'tmux new -s ci-test -n shell -d'" ]
+  - [ sh, -xc, "su cloud -c 'tmux new-window -t ci-test:0 -n cmd'" ]
+  - [ sh, -xc, "su cloud -c 'tmux new-window -t ci-test:1 -n apache'" ]
+  - [ sh, -xc, "su cloud -c 'tmux send-keys -t ci-test:1 /tmp/start-apache.sh C-m'"]
+
+write_files:
+-   content: |
+        #!/usr/bin/env bash
+        while true; do
+          curl ${vip} 2>/dev/null
+          sleep 1
+        done
+    path: /tmp/loop-curl.sh
+    permissions: 0775
+
+-   content: |
+        #!/usr/bin/env bash
+        sudo a2enmod ssl
+        sudo a2ensite default-ssl
+        sudo service apache2 restart
+        echo `hostname` | sudo tee /var/www/html/index.html
+    path: /tmp/start-apache.sh
+    permissions: 0775
+-   content: |
+        #!/bin/bash
+
+        TIMEOUT=10
+
+        curl --connect-timeout $TIMEOUT ${ip_backend_0} && curl --connect-timeout $TIMEOUT ${ip_backend_1}
+    path: /tmp/check_backend.sh
+    permissions: 0775
