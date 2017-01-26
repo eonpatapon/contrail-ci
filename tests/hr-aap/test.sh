@@ -17,7 +17,7 @@ declare -g vm1_tracking_id
 task_default() {
     runner_sequence setup capture can_ping_vm1 can_ping_google vm1_use_fw1 delete_fw1 vm1_use_fw2 restore_fw1 vm1_use_fw1
     result=${?}
-    #runner_sequence teardown
+    runner_sequence teardown
     return $result
 }
 
@@ -53,7 +53,7 @@ task_delete_capture() {
 }
 
 task_can_ping_vm1() {
-    flow=$(wait_flow 30 "G.V().Has('Name', '${itf_name_bastion}').Flows().Has('Application', 'ICMPv4').Has('Metric.ABPackets', GT(0)).Has('Metric.BAPackets', GT(0))") || return 1
+    flow=$(wait_flow 60 "G.V().Has('Name', '${itf_name_bastion}').Flows().Has('Application', 'ICMPv4').Has('Metric.ABPackets', GT(0)).Has('Metric.BAPackets', GT(0))") || return 1
 }
 
 task_can_ping_google() {
@@ -63,7 +63,7 @@ task_can_ping_google() {
 
 task_vm1_use_fw1() {
     port_ip=$(port_fixed_ip "aap_fw_vm1_port") || return 1
-    flow=$(wait_flow 30 "G.V().Has('Name', '${itf_name_fw1}').Flows().Has('Application', 'ICMPv4').Has('Network.A', within('8.8.8.8', '${port_ip}')).Has('Network.B', within('8.8.8.8', '${port_ip}')).Has('Metric.ABPackets', GT(0)).Has('Metric.BAPackets', GT(0))") || return 1
+    flow=$(wait_flow 60 "G.V().Has('Name', '${itf_name_fw1}').Flows().Has('Application', 'ICMPv4').Has('Network.A', within('8.8.8.8', '${port_ip}')).Has('Network.B', within('8.8.8.8', '${port_ip}')).Has('Metric.ABPackets', GT(0)).Has('Metric.BAPackets', GT(0))") || return 1
 }
 
 task_delete_fw1() {
@@ -73,7 +73,7 @@ task_delete_fw1() {
 
 task_vm1_use_fw2() {
     port_ip=$(port_fixed_ip "aap_fw_vm1_port") || return 1
-    flow=$(wait_flow 20 "G.V().Has('Name', '${itf_name_fw2}').Flows().Has('Application', 'ICMPv4').Has('Network.A', within('8.8.8.8', '${port_ip}')).Has('Network.B', within('8.8.8.8', '${port_ip}')).Has('Metric.ABPackets', GT(0)).Has('Metric.BAPackets', GT(0))") || return 1
+    flow=$(wait_flow 30 "G.V().Has('Name', '${itf_name_fw2}').Flows().Has('Application', 'ICMPv4').Has('Network.A', within('8.8.8.8', '${port_ip}')).Has('Network.B', within('8.8.8.8', '${port_ip}')).Has('Metric.ABPackets', GT(0)).Has('Metric.BAPackets', GT(0))") || return 1
 }
 
 task_restore_fw1() {
