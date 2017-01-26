@@ -31,7 +31,7 @@ gremlin() {
 
 capture() {
     local desc=${2:-"CI test"}
-    local capture=$(skydive -c ${CI_SKYDIVE_CONF} client capture create --description "$desc" --gremlin "$1")
+    local capture=$(skydive -c ${CI_SKYDIVE_CONF} client capture create --description "$desc ($USER)" --gremlin "$1")
     >&2 runner_log_notice "Capture result : $capture"
     local capture_id=$(echo $capture | jq -r '.UUID')
     if [[ -z $capture_id ]]; then
