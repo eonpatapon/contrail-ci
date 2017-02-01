@@ -36,7 +36,6 @@ resource "openstack_networking_subnet_v2" "aap_fw_subnet_admin" {
   cidr = "10.44.0.0/24"
   ip_version = 4
   region = "${var.region}"
-/*
   host_routes {
     destination_cidr = "10.66.0.0/24"
     next_hop = "10.44.0.200"
@@ -45,7 +44,6 @@ resource "openstack_networking_subnet_v2" "aap_fw_subnet_admin" {
     destination_cidr = "0.0.0.0/0"
     next_hop = "10.44.0.1"
   }
-*/
 }
 
 resource "openstack_networking_router_v2" "aap_fw_router" {
@@ -72,7 +70,6 @@ resource "openstack_networking_subnet_v2" "aap_fw_subnet_backend" {
   cidr = "10.66.0.0/24"
   ip_version = 4
   region = "${var.region}"
-/*
   host_routes {
     destination_cidr = "10.44.0.0/24"
     next_hop = "10.66.0.200"
@@ -81,7 +78,6 @@ resource "openstack_networking_subnet_v2" "aap_fw_subnet_backend" {
     destination_cidr = "0.0.0.0/0"
     next_hop = "10.66.0.200"
   }
-*/
 }
 
 resource "openstack_networking_port_v2" "aap_fw_bastion_port" {
@@ -230,24 +226,6 @@ resource "openstack_compute_instance_v2" "aap_fw_vm1" {
   }
   key_pair = "${var.key_pair}"
   user_data = "#!/bin/bash\n\nscreen -d -m ping 8.8.8.8"
-}
-
-resource "null_resource" "add_host_route_backend" {
-  triggers {
-    backend = "openstack_networking_subnet_v2.aap_fw_subnet_backend.id"
-  }
-  provisioner "local-exec" {
-    command = "neutron --os-region-name ${var.region} subnet-update ${openstack_networking_subnet_v2.aap_fw_subnet_backend.id} --host_routes type=dict list=true destination=10.44.0.0/24,nexthop=10.66.0.200 destination=0.0.0.0/0,nexthop=10.66.0.200"
-  }
-}
-
-resource "null_resource" "add_host_route_admin" {
-  triggers {
-    admin = "openstack_networking_subnet_v2.aap_fw_subnet_admin.id"
-  }
-  provisioner "local-exec" {
-    command = "neutron --os-region-name ${var.region} subnet-update ${openstack_networking_subnet_v2.aap_fw_subnet_admin.id} --host_routes type=dict list=true destination=10.66.0.0/24,nexthop=10.44.0.200 destination=0.0.0.0/0,nexthop=10.44.0.1"
-  }
 }
 
 output "aap_fw_bastion_ip" {

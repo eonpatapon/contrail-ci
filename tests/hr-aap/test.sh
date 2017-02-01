@@ -57,13 +57,11 @@ task_can_ping_vm1() {
 }
 
 task_can_ping_google() {
-    port_ip=$(port_fixed_ip "aap_fw_vm1_port") || return 1
-    flow=$(wait_flow 30 "G.V().Has('Name', '${itf_name_vm1}').Flows().Has('Application', 'ICMPv4').Has('Network.A', within('8.8.8.8', '${port_ip}')).Has('Network.B', within('8.8.8.8', '${port_ip}')).Has('Metric.ABPackets', GT(0)).Has('Metric.BAPackets', GT(0))") || return 1
+    flow=$(wait_flow 30 "G.V().Has('Name', '${itf_name_vm1}').Flows().Has('Application', 'ICMPv4').Has('Network', '8.8.8.8').Has('Metric.ABPackets', GT(0)).Has('Metric.BAPackets', GT(0))") || return 1
 }
 
 task_vm1_use_fw1() {
-    port_ip=$(port_fixed_ip "aap_fw_vm1_port") || return 1
-    flow=$(wait_flow 60 "G.V().Has('Name', '${itf_name_fw1}').Flows().Has('Application', 'ICMPv4').Has('Network.A', within('8.8.8.8', '${port_ip}')).Has('Network.B', within('8.8.8.8', '${port_ip}')).Has('Metric.ABPackets', GT(0)).Has('Metric.BAPackets', GT(0))") || return 1
+    flow=$(wait_flow 60 "G.V().Has('Name', '${itf_name_fw1}').Flows().Has('Application', 'ICMPv4').Has('Network', '8.8.8.8').Has('Metric.ABPackets', GT(0)).Has('Metric.BAPackets', GT(0))") || return 1
 }
 
 task_delete_fw1() {
@@ -72,8 +70,7 @@ task_delete_fw1() {
 }
 
 task_vm1_use_fw2() {
-    port_ip=$(port_fixed_ip "aap_fw_vm1_port") || return 1
-    flow=$(wait_flow 30 "G.V().Has('Name', '${itf_name_fw2}').Flows().Has('Application', 'ICMPv4').Has('Network.A', within('8.8.8.8', '${port_ip}')).Has('Network.B', within('8.8.8.8', '${port_ip}')).Has('Metric.ABPackets', GT(0)).Has('Metric.BAPackets', GT(0))") || return 1
+    flow=$(wait_flow 30 "G.V().Has('Name', '${itf_name_fw2}').Flows().Has('Application', 'ICMPv4').Has('Network', '8.8.8.8').Has('Metric.ABPackets', GT(0)).Has('Metric.BAPackets', GT(0))") || return 1
 }
 
 task_restore_fw1() {
