@@ -13,7 +13,12 @@ check_binary() {
     type -P $1 > /dev/null || (echo "error: $1 is not in your PATH"; exit 1)
 }
 
+check_key() {
+    nova keypair-show test-key && terraform import -var-file=${CI_TERRAFORM_VARS} openstack_compute_keypair_v2.test-key test-key || return 0
+}
+
 terrapply() {
+    check_key || return 1
     retry 3 terraform apply -var-file=${CI_TERRAFORM_VARS} $@ || return 1
 }
 
