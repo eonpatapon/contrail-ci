@@ -9,6 +9,18 @@ export CI_ENVS_DIR=${CI_COMMON_DIR}/../envs
 export CI_SKYDIVE_CONF=${CI_ENVS_DIR}/${OS_REGION_NAME}-skydive.yml
 export CI_TERRAFORM_VARS=${CI_ENVS_DIR}/${OS_REGION_NAME}.tfvars
 
+save_vars() {
+    declare -pg $@ >> environ
+}
+
+get_vars() {
+    [ -f environ ] && echo eval "source environ"
+}
+
+clean_vars() {
+    rm -f environ
+}
+
 check_binary() {
     type -P $1 > /dev/null || (echo "error: $1 is not in your PATH"; exit 1)
 }

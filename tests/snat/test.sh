@@ -5,9 +5,6 @@ set -e
 source ../../common/common.sh
 source ../../common/runner.sh
 
-declare -g capture_ids
-declare -g itf_names
-
 task_default() {
     runner_sequence setup capture can_ping_google
     result=${?}
@@ -21,11 +18,11 @@ task_setup() {
 
 task_destroy() {
     terradestroy || return 1
-    rm -f environ
 }
 
 task_teardown() {
     runner_parallel delete_capture destroy
+    clean_vars
 }
 
 task_capture() {
@@ -37,11 +34,11 @@ task_capture() {
         capture_ids="${capture_ids} ${capture_id}"
         itf_names="${itf_names} ${itf_name}"
     done
-    declare -p itf_names capture_ids > environ
+    save_vars itf_names capture_ids
 }
 
 task_can_ping_google() {
-    source environ
+    `get_vars`
     for itf_name in $itf_names
     do
         flow=$(wait_flow 20 "G.V().Has('Name', '${itf_name}').Flows().Has('Application', 'ICMPv4').Has('Metric.ABPackets', GT(0)).Has('Metric.BAPackets', GT(0))") || return 1
@@ -49,7 +46,7 @@ task_can_ping_google() {
 }
 
 task_delete_capture() {
-    source environ
+    `get_vars`
     for capture_id in $capture_ids
     do
         delete_capture $capture_id
