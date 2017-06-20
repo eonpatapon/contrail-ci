@@ -7,10 +7,6 @@ source ../../common/runner.sh
 
 check_binary neutron
 
-declare -g capture_id
-declare -g itf_name
-declare -g tracking_id
-
 task_default() {
     runner_sequence setup capture can_ping_backend delete_router cannot_ping_backend
     result=${?}
@@ -28,11 +24,13 @@ task_destroy() {
 
 task_teardown() {
     runner_parallel delete_capture destroy
+    clean_vars
 }
 
 task_capture() {
     itf_name=$(port_interface_name "hr_bastion_port") || return 1
     capture_id=$(capture "G.V().Has('Name', '${itf_name}')") || return 1
+    save_vars itf_name capture_id
 }
 
 task_delete_capture() {
@@ -40,9 +38,11 @@ task_delete_capture() {
 }
 
 task_can_ping_backend() {
+    `get_vars`
     flow=$(wait_flow 20 "G.V().Has('Name', '${itf_name}').Flows().Has('Application', 'ICMPv4').Has('Metric.ABPackets', GT(0)).Has('Metric.BAPackets', GT(0))") || return 1
     tracking_id=$(echo "${flow}" | jq -r '.[].TrackingID')
     runner_log_success "Found expected flow with TrackingID ${tracking_id}"
+    save_vars tracking_id
 }
 
 task_delete_router() {
@@ -51,6 +51,7 @@ task_delete_router() {
 }
 
 task_cannot_ping_backend() {
+    `get_vars`
     flow1=$(gremlin "G.V().Has('Name', '$itf_name').Flows().Has('TrackingID', '${tracking_id}')") || return 1
     local -i flow1AB=$(echo $flow1 | jq -r '.[].Metric.ABPackets')
     local -i flow1BA=$(echo $flow1 | jq -r '.[].Metric.BAPackets')
