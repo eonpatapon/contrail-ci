@@ -1,0 +1,34 @@
+#cloud-config
+
+package_update: true
+packages:
+  - keepalived
+
+runcmd:
+  - systemctl keepalived restart
+
+write_files:
+  - content: |
+        vrrp_instance VIP {
+            interface eth0
+            state MASTER
+            virtual_router_id 51
+            priority 101
+            use_vmac vrrp51
+            vmac_xmit_base
+
+            virtual_ipaddress {
+                15.15.15.15 brd 15.15.15.255
+            }
+
+            notify_master "/root/vrrp_sysctl.sh vrrp51"
+        }
+    path: /etc/keepalived/keepalived.conf
+    permissions: 644
+  - content: |
+        #!/bin/bash
+
+        echo 0 > /proc/sys/net/ipv4/conf/all/rp_filter
+        echo 0 > /proc/sys/net/ipv4/conf/$1/rp_filter
+    path: /root/vrrp_sysctl.sh
+    permissions: 755

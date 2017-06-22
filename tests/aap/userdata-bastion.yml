@@ -1,0 +1,8 @@
+#cloud-config
+
+package_update: true
+packages:
+  - oping 
+
+runcmd:
+  - screen -d -m ping 15.15.15.15
