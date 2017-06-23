@@ -53,18 +53,6 @@ resource "openstack_networking_router_interface_v2" "aap_router_interface" {
   subnet_id = "${openstack_networking_subnet_v2.aap_subnet.id}"
 }
 
-resource "openstack_networking_port_v2" "aap_vip_port" {
-  name = "aap_vip_port"
-  network_id = "${openstack_networking_network_v2.aap_net.id}"
-  admin_state_up = "true"
-  security_group_ids = ["${openstack_compute_secgroup_v2.aap_secgroup_icmp_ssh.id}"]
-  region = "${var.region}"
-  fixed_ip {
-    subnet_id = "${openstack_networking_subnet_v2.aap_subnet.id}"
-    ip_address = "${var.vip_ip}"
-  }
-}
-
 resource "openstack_networking_port_v2" "aap_vm1_port" {
   name = "aap_vm1_port"
   network_id = "${openstack_networking_network_v2.aap_net.id}"
@@ -73,6 +61,10 @@ resource "openstack_networking_port_v2" "aap_vm1_port" {
   region = "${var.region}"
   fixed_ip {
     subnet_id = "${openstack_networking_subnet_v2.aap_subnet.id}"
+  }
+  allowed_address_pairs {
+    ip_address = "${var.vip_ip}"
+    mac_address = "00:00:5e:00:01:33"
   }
 }
 
@@ -90,6 +82,10 @@ resource "openstack_networking_port_v2" "aap_vm2_port" {
   region = "${var.region}"
   fixed_ip {
     subnet_id = "${openstack_networking_subnet_v2.aap_subnet.id}"
+  }
+  allowed_address_pairs {
+    ip_address = "${var.vip_ip}"
+    mac_address = "00:00:5e:00:01:33"
   }
 }
 
@@ -117,7 +113,6 @@ resource "openstack_networking_floatingip_v2" "aap_bastion_fip" {
 }
 
 resource "openstack_compute_instance_v2" "aap_bastion" {
-  depends_on = ["null_resource.add_aap"]
   region = "${var.region}"
   name = "aap_bastion"
   image_id = "${var.image_id}"
@@ -137,7 +132,6 @@ resource "openstack_compute_instance_v2" "aap_bastion" {
 }
 
 resource "openstack_compute_instance_v2" "aap_vm1" {
-  depends_on = ["null_resource.add_aap"]
   name = "aap_vm1"
   region = "${var.region}"
   image_id = "${var.image_id}"
@@ -157,7 +151,6 @@ resource "openstack_compute_instance_v2" "aap_vm1" {
 }
 
 resource "openstack_compute_instance_v2" "aap_vm2" {
-  depends_on = ["null_resource.add_aap"]
   name = "aap_vm2"
   region = "${var.region}"
   image_id = "${var.image_id}"
@@ -174,19 +167,6 @@ resource "openstack_compute_instance_v2" "aap_vm2" {
     group = "${openstack_compute_servergroup_v2.aap_group.id}"
   }
   user_data = "${file("userdata-backup.yml")}"
-}
-
-resource "null_resource" "add_aap" {
-  triggers {
-    vm1 = "openstack_networking_port_v2.aap_vm1_port"
-    vm2 = "openstack_networking_port_v2.aap_vm2_port"
-  }
-  provisioner "local-exec" {
-    command = "neutron port-update ${openstack_networking_port_v2.aap_vm1_port.id} --allowed_address_pairs list=true type=dict ip_address=${openstack_networking_port_v2.aap_vip_port.fixed_ip.0.ip_address},mac_address=00:00:5e:00:01:33"
-  }
-  provisioner "local-exec" {
-    command = "neutron port-update ${openstack_networking_port_v2.aap_vm2_port.id} --allowed_address_pairs list=true type=dict ip_address=${openstack_networking_port_v2.aap_vip_port.fixed_ip.0.ip_address},mac_address=00:00:5e:00:01:33"
-  }
 }
 
 output "aap_bastion_ip" {
