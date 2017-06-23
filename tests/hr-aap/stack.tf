@@ -49,7 +49,6 @@ resource "openstack_networking_subnet_v2" "aap_fw_subnet_admin" {
 resource "openstack_networking_router_v2" "aap_fw_router" {
   region = "${var.region}"
   name = "aap_fw_router"
-  external_gateway = "${var.public_pool_id}"
 }
 
 resource "openstack_networking_router_interface_v2" "aap_fw_router_interface" {
@@ -139,6 +138,12 @@ resource "openstack_networking_port_v2" "aap_fw_fw1_port_admin" {
   }
 }
 
+resource "openstack_networking_floatingip_v2" "aap_fw_fw1_fip" {
+  region = "${var.region}"
+  pool = "public"
+  port_id = "${openstack_networking_port_v2.aap_fw_fw1_port_admin.id}"
+}
+
 resource "openstack_compute_instance_v2" "aap_fw_fw1" {
   name = "aap_fw_fw1"
   region = "${var.region}"
@@ -185,6 +190,12 @@ resource "openstack_networking_port_v2" "aap_fw_fw2_port_admin" {
     ip_address = "10.44.0.200"
     mac_address = "00:00:5e:00:01:2c"
   }
+}
+
+resource "openstack_networking_floatingip_v2" "aap_fw_fw2_fip" {
+  region = "${var.region}"
+  pool = "public"
+  port_id = "${openstack_networking_port_v2.aap_fw_fw2_port_admin.id}"
 }
 
 resource "openstack_compute_instance_v2" "aap_fw_fw2" {
