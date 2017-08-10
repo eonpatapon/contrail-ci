@@ -254,14 +254,11 @@ resource "openstack_lb_monitor_v1" "lb_monitor" {
 resource "openstack_lb_vip_v1" "lb_vip" {
   name = "lb_vip"
   subnet_id = "${openstack_networking_subnet_v2.lb_subnet_backend.id}"
-  #protocol = "TCP"
   protocol = "HTTP"
   port = 80
   pool_id = "${openstack_lb_pool_v1.lb_pool_backend.id}"
-  #persistence {
-  #  type = "SOURCE_IP"
-  #}
   region = "${var.region}"
+  admin_state_up = "true"
 }
 
 
@@ -274,6 +271,7 @@ resource "openstack_lb_member_v1" "lb_member_backend_0" {
   address = "${openstack_networking_port_v2.lb_port_backend_0.fixed_ip.0.ip_address}"
   port = 80
   region = "${var.region}"
+  admin_state_up = "true"
 }
 
 resource "openstack_lb_member_v1" "lb_member_backend_1" {
@@ -281,6 +279,7 @@ resource "openstack_lb_member_v1" "lb_member_backend_1" {
   address = "${openstack_networking_port_v2.lb_port_backend_1.fixed_ip.0.ip_address}"
   port = 80
   region = "${var.region}"
+  admin_state_up = "true"
 }
 
 ################
