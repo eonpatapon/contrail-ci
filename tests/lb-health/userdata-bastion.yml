@@ -1,0 +1,26 @@
+#cloud-config
+
+user: cloud
+ssh_pwauth: no
+chpasswd:
+    list: |
+        root:cloud
+        cloud:cloud
+    expire: False
+
+final_message: "!!! Instance booted !!! (cloudinit runs in $UPTIME seconds)"
+
+output: {all: '| tee -a /var/log/cloud-init-output.log'}
+
+runcmd:
+  - [ sh, -xc, "screen -d -m /tmp/loop-curl.sh"]
+
+write_files:
+-   content: |
+        #!/usr/bin/env bash
+        while true; do
+          curl ${vip} 2>/dev/null
+          sleep 1
+        done
+    path: /tmp/loop-curl.sh
+    permissions: 0775

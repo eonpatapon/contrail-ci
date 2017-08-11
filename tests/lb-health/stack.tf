@@ -10,13 +10,11 @@ variable cloudinit {
 # Template Files #
 ##################
 
-data "template_file" "cloudinit" {
-    template = "${file("cloudinit.yml")}"
+data "template_file" "bastion_cinit" {
+    template = "${file("userdata-bastion.yml")}"
 
     vars {
         vip = "${openstack_lb_vip_v1.lb_vip.address}"
-        ip_backend_0 = "${openstack_networking_port_v2.lb_port_backend_0.fixed_ip.0.ip_address}"
-        ip_backend_1 = "${openstack_networking_port_v2.lb_port_backend_1.fixed_ip.0.ip_address}"
     }
 }
 
@@ -113,13 +111,6 @@ resource "openstack_compute_secgroup_v2" "lb_secgroup_bastion" {
     cidr = "0.0.0.0/0"
     from_group_id = ""
   }
-  rule {
-    from_port = 80
-    to_port = 80
-    ip_protocol = "tcp"
-    cidr = "0.0.0.0/0"
-    from_group_id = ""
-  }
 }
 
 resource "openstack_compute_secgroup_v2" "lb_secgroup_backend_0" {
@@ -134,25 +125,18 @@ resource "openstack_compute_secgroup_v2" "lb_secgroup_backend_0" {
     from_group_id = ""
   }
   rule {
-    from_port = 443
-    to_port = 443
+    from_port = 22
+    to_port = 22
     ip_protocol = "tcp"
     cidr = "0.0.0.0/0"
     from_group_id = ""
   }
   rule {
-    from_port = 22
-    to_port = 22
-    ip_protocol = "tcp"
-    from_group_id = "${openstack_compute_secgroup_v2.lb_secgroup_bastion.id}"
-    cidr = ""
-  }
-  rule {
     from_port = "-1"
     to_port = "-1"
     ip_protocol = "icmp"
-    from_group_id = "${openstack_compute_secgroup_v2.lb_secgroup_bastion.id}"
-    cidr = ""
+    cidr = "0.0.0.0/0"
+    from_group_id = ""
   }
 }
 
@@ -168,25 +152,18 @@ resource "openstack_compute_secgroup_v2" "lb_secgroup_backend_1" {
     from_group_id = ""
   }
   rule {
-    from_port = 443
-    to_port = 443
+    from_port = 22
+    to_port = 22
     ip_protocol = "tcp"
     cidr = "0.0.0.0/0"
     from_group_id = ""
   }
   rule {
-    from_port = 22
-    to_port = 22
-    ip_protocol = "tcp"
-    from_group_id = "${openstack_compute_secgroup_v2.lb_secgroup_bastion.id}"
-    cidr = ""
-  }
-  rule {
     from_port = "-1"
     to_port = "-1"
     ip_protocol = "icmp"
-    from_group_id = "${openstack_compute_secgroup_v2.lb_secgroup_bastion.id}"
-    cidr = ""
+    cidr = "0.0.0.0/0"
+    from_group_id = ""
   }
 }
 
@@ -197,7 +174,6 @@ resource "openstack_compute_secgroup_v2" "lb_secgroup_backend_1" {
 resource "openstack_networking_router_v2" "lb_router" {
   region = "${var.region}"
   name = "lb_router"
-  external_gateway = "${var.public_pool_id}"
 }
 
 #####################
@@ -312,7 +288,7 @@ resource "openstack_compute_instance_v2" "lb_backend_0" {
   scheduler_hints {
     group = "${openstack_compute_servergroup_v2.lb_group_backend.id}"
   }
-  user_data = "${data.template_file.cloudinit.rendered}"
+  user_data = "${file("userdata-backend.yml")}"
 }
 
 resource "openstack_compute_instance_v2" "lb_backend_1" {
@@ -331,7 +307,7 @@ resource "openstack_compute_instance_v2" "lb_backend_1" {
   scheduler_hints {
     group = "${openstack_compute_servergroup_v2.lb_group_backend.id}"
   }
-  user_data = "${data.template_file.cloudinit.rendered}"
+  user_data = "${file("userdata-backend.yml")}"
 }
 
 ###########
@@ -351,7 +327,7 @@ resource "openstack_compute_instance_v2" "bastion" {
   }
   key_pair = "${var.key_pair}"
   security_groups = ["lb_secgroup_bastion"]
-  user_data = "${data.template_file.cloudinit.rendered}"
+  user_data = "${data.template_file.bastion_cinit.rendered}"
 }
 
 ###############

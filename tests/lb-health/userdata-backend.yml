@@ -1,0 +1,13 @@
+#cloud-config
+
+user: cloud
+
+runcmd:
+  - [ sh, -xc, "screen -d -m /tmp/web.sh"]
+
+write_files:
+-   content: |
+        #!/usr/bin/env bash
+        while true; do echo -e "HTTP/1.1 200 OK\n\n$(hostname)" | nc -l 0.0.0.0 80; done
+    path: /tmp/web.sh
+    permissions: 0775
