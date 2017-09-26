@@ -29,7 +29,7 @@ task_teardown() {
 
 task_capture() {
     itf_name=$(port_interface_name "hr_bastion_port") || return 1
-    capture_id=$(capture "G.V().Has('Name', '${itf_name}')") || return 1
+    capture_id=$(capture "G.V().Has('Name', '${itf_name}')" "HR test") || return 1
     save_vars itf_name capture_id
 }
 

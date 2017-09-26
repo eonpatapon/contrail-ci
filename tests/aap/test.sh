@@ -32,7 +32,7 @@ task_capture() {
     itf_name_vm2=$(port_interface_name "aap_vm2_port") || return 1
     for itf_name in ${itf_name_vm1} ${itf_name_vm2}
     do
-        capture_id=$(capture "G.V().Has('Name', '${itf_name}')" "aap test") || return 1
+        capture_id=$(capture "G.V().Has('Name', '${itf_name}')" "AAP test") || return 1
         capture_ids="${capture_ids} ${capture_id}"
     done
     save_vars capture_ids itf_name_vm1 itf_name_vm2
