@@ -48,6 +48,7 @@ task_can_ping_backend() {
 task_delete_router() {
     router_id=$(resource_id "openstack_compute_instance_v2.hr_router") || return 1
     runner_run nova delete $router_id
+    sleep 5
 }
 
 task_cannot_ping_backend() {
