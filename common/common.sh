@@ -26,7 +26,7 @@ check_binary() {
 }
 
 check_key() {
-    nova keypair-show test-key && terraform import -var-file=${CI_TERRAFORM_VARS} openstack_compute_keypair_v2.test-key test-key || return 0
+    nova keypair-show test-key 2>/dev/null && terraform import -var-file=${CI_TERRAFORM_VARS} openstack_compute_keypair_v2.test-key test-key || return 0
 }
 
 terrapply() {
@@ -76,6 +76,12 @@ resource_id() {
     echo $id
 }
 
+vm_id() {
+    local name=$1
+    id=$(resource_id openstack_compute_instance_v2.${name}) || return 1
+    echo $id
+}
+
 fuzzy_resource_ids() {
     local name=$1
     local matches=$(cat terraform.tfstate | jq -r ".modules[].resources | keys[] | select(contains(\"${name}\"))")
@@ -101,6 +107,26 @@ port_fixed_ip() {
         return 1
     fi
     echo $fixed_ip
+}
+
+fip_ip() {
+    local name=$1
+    local ip=$(cat terraform.tfstate | jq -r ".modules[].resources[\"openstack_networking_floatingip_v2.${name}\"].primary.attributes.address")
+    if [[ -z $ip ]] || [[ $ip == "null" ]]; then
+        >&2 runner_log_error "Can't find $name IP in terraform state"
+        return 1
+    fi
+    echo $ip
+}
+
+fip_port_id() {
+    local name=$1
+    local port_id=$(cat terraform.tfstate | jq -r ".modules[].resources[\"openstack_networking_floatingip_v2.${name}\"].primary.attributes.port_id")
+    if [[ -z $port_id ]] || [[ $port_id == "null" ]]; then
+        >&2 runner_log_error "Can't find $name port_id in terraform state"
+        return 1
+    fi
+    echo $port_id
 }
 
 # Wait for skydive flow.
@@ -146,6 +172,23 @@ retry() {
         else
             >&2 runner_log_warning "Attempt $attempt_num failed! Trying again in $attempt_num seconds..."
             sleep $(( attempt_num++ ))
+        fi
+    done
+}
+
+wait_cloudinit() {
+    local vm_name=$1
+    vm_id=$(vm_id ${vm_name}) || return 1
+    local -r -i max_attempts=30
+    >&2 runner_log_notice "Waiting for VM ${vm_name} to be ready..."
+    for attempt_num in $(seq $max_attempts)
+    do
+        nova console-log --length 10 ${vm_id} | grep -q 'Instance booted'
+        if [ $? -eq 0 ]; then
+            >&2 runner_log_notice "VM ${vm_name} is ready"
+            break
+        else
+            >&2 runner_log_notice "VM ${vm_name} is not ready..."
         fi
     done
 }
