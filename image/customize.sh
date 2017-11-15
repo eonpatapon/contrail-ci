@@ -16,7 +16,7 @@ mount_support
 rm ${rootdir}/etc/apt/sources.list.d/base.list
 
 # Prepare apt for installing packages in the chroot
-echo "deb http://localhost:3142/ftp.fr.debian.org/debian/ jessie main" > ${rootdir}/etc/apt/sources.list
+echo "deb http://localhost:3142/ftp.fr.debian.org/debian/ stable main" > ${rootdir}/etc/apt/sources.list
 chroot ${rootdir} apt update
 
 # Apply debconf-selections before installing the packages
