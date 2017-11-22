@@ -54,13 +54,15 @@ task_check_vip() {
             return 1
         fi
     fi
-    runner_log_notice "All backends are responding"
+    runner_log_success "All backends are responding"
 }
 
 task_apply_sg_vip() {
     port_id=$(fip_port_id "lb_vip_sg_fip_vip") || return 1
     sg_id=$(resource_id "openstack_compute_secgroup_v2.lb_vip_sg_secgroup") || return 1
     neutron port-update ${port_id} --security-group ${sg_id}
+    # wait a bit for the sg to be propagated
+    sleep 3
 }
 
 task_check_vip_not_responding() {
@@ -70,7 +72,7 @@ task_check_vip_not_responding() {
         runner_log_error "VIP is still responding"
         return 1
     fi
-    runner_log_notice "VIP is not responding"
+    runner_log_success "VIP is not responding"
 }
 
 task_remove_sg_vip() {

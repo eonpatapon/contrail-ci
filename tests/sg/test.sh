@@ -46,6 +46,8 @@ task_should_see_ping_on_both_ends() {
 
 task_remove_sg_rule() {
     terrapply -target=openstack_compute_secgroup_v2.sg_secgroup remove-sg-rule || return 1
+    # wait a bit for the sg to be propagated
+    sleep 3
 }
 
 task_should_not_see_ping_on_both_ends() {
