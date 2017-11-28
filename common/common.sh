@@ -42,11 +42,7 @@ terrapply() {
         key_pair=$(basename ${key_path} | cut -f1 -d'.')
         save_vars key_path
     fi
-    retry 3 terraform apply -var key_path=${key_path}.pub -var key_pair=${key_pair} -var-file=${CI_TERRAFORM_VARS} $@
-    if [ ! $? -eq 0 ]; then
-        rm -f ${key_path} ${key_path}.pub
-        return 1
-    fi
+    retry 3 terraform apply -var key_path=${key_path}.pub -var key_pair=${key_pair} -var-file=${CI_TERRAFORM_VARS} $@ || return 1
 }
 
 terradestroy() {
