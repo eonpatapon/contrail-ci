@@ -25,17 +25,37 @@ check_binary() {
     type -P $1 > /dev/null || (echo "error: $1 is not in your PATH"; exit 1)
 }
 
-check_key() {
-    nova keypair-show test-key 2>/dev/null && terraform import -var-file=${CI_TERRAFORM_VARS} openstack_compute_keypair_v2.test-key test-key || return 0
+random_string() {
+    echo $(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
+}
+
+gen_key() {
+    local key_path=/tmp/$(random_string)
+    ssh-keygen -N "" -q -f ${key_path} && echo ${key_path} || return 1
 }
 
 terrapply() {
-    check_key || return 1
-    retry 3 terraform apply -var-file=${CI_TERRAFORM_VARS} $@ || return 1
+    `get_vars`
+    # Avoid creating multiple keys when a test is running multiple times this function
+    if [ -z ${key_path} ]; then
+        key_path=$(gen_key) || return 1
+        key_pair=$(basename ${key_path} | cut -f1 -d'.')
+        save_vars key_path
+    fi
+    retry 3 terraform apply -var key_path=${key_path}.pub -var key_pair=${key_pair} -var-file=${CI_TERRAFORM_VARS} $@
+    if [ ! $? -eq 0 ]; then
+        rm -f ${key_path} ${key_path}.pub
+        return 1
+    fi
 }
 
 terradestroy() {
-    retry 3 terraform destroy -var-file=${CI_TERRAFORM_VARS} -force || return 1
+    `get_vars`
+    retry 3 terraform destroy -var key_path=${key_path}.pub -var key_pair=${key_pair} -var-file=${CI_TERRAFORM_VARS} -force
+    rm -f ${key_path} ${key_path}.pub
+    if [ ! $? -eq 0 ]; then
+        return 1
+    fi
 }
 
 gremlin() {

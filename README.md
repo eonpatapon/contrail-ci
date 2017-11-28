@@ -1,3 +1,11 @@
+About
+=====
+
+This project contains some test infrastructure stacks to validate contrail builds.
+
+Usually each test will boot an infrastructure with terraform, run some captures with skydive
+and validate that the traffic captured is expected. Then the infrastructure is destroyed.
+
 Setup
 =====
 
@@ -24,12 +32,15 @@ Tests
 Each test consist of a single `test.sh` script. The script must use the `bash-task-runner`[1]
 library present in the common directory.
 
-Usually each test will boot an infrastructure with terraform, run some captures with skydive
-and validate that the traffic captured is expected. Then the infrastructure is destroyed.
-
 To list all available tests, simply run:
 
     ls tests
+
+    or
+
+    ./run.sh list
+
+Tests can be disabled in the `run.sh` by creating a `disabled` file in the test directory.
 
 Usage
 =====
@@ -37,6 +48,10 @@ Usage
 Run all tests:
 
     ./run.sh
+
+Run all tests in parallel:
+
+    ./run.sh all_parallel
 
 Run a specific test:
 
@@ -64,7 +79,7 @@ In local.conf:
     SKYDIVE_GRAPH_STORAGE="memory"
     SKYDIVE_KEYSTONE_API_VERSION="v2.0"
 
-Once devstack setup is complete, go to /opt/stack/contrail-ci:
+Once devstack setup is complete, go to `/opt/stack/contrail-ci`:
 
     source setup.sh
     ./run.sh sg

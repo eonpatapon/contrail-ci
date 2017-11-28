@@ -8,12 +8,13 @@ chpasswd:
         cloud:cloud
     expire: False
 
-final_message: "!!! Instance booted !!! (cloudinit runs in $UPTIME seconds)"
+final_message: "Instance booted (cloudinit runs in $UPTIME seconds)"
 
-output: {all: '| tee -a /var/log/cloud-init-output.log'}
+output:
+    final: '> /dev/ttyS0'
 
 runcmd:
-  - [ sh, -xc, "screen -d -m /tmp/loop-curl.sh"]
+  - [ sh, -xc, "screen -d -m /tmp/loop-curl.sh" ]
 
 write_files:
 -   content: |

@@ -170,16 +170,6 @@ task_stop_traffic() {
 # Functions #
 #############
 
-ssh-exec() {
-    user=$USER
-    ip=$1
-    shift
-    cmd=$@
-    key="$HOME/git/contrail-ci/common/test-key"
-    ssh -i ${key} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "${user}@${ip}" "${cmd}"
-    return $?
-}
-
 start_capture_on_port() {
     itf_name=$(port_interface_name "$1") || return 1
     capture_id=$(capture "G.V().Has('Name', '${itf_name}')" "$DESC") || return 1
