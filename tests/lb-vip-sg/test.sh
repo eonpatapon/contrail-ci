@@ -16,6 +16,7 @@ task_default() {
 }
 
 task_setup() {
+    clean_vars
     terrapply || return 1
 }
 
@@ -25,6 +26,7 @@ task_destroy() {
 
 task_teardown() {
     runner_sequence remove_sg_vip destroy
+    clean_vars
 }
 
 task_wait_backends() {

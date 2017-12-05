@@ -8,17 +8,18 @@ export CI_COMMON_DIR=$(pwd)/$(dirname $BASH_SOURCE)
 export CI_ENVS_DIR=${CI_COMMON_DIR}/../envs
 export CI_SKYDIVE_CONF=${CI_ENVS_DIR}/${OS_REGION_NAME}-skydive.yml
 export CI_TERRAFORM_VARS=${CI_ENVS_DIR}/${OS_REGION_NAME}.tfvars
+export CI_TERRAFORM_STATE=${OS_REGION_NAME}/terraform.tfstate
 
 save_vars() {
-    declare -pg $@ >> environ
+    declare -pg $@ >> ${OS_REGION_NAME}/environ
 }
 
 get_vars() {
-    [ -f environ ] && echo eval "source environ"
+    [ -f ${OS_REGION_NAME}/environ ] && echo eval "source ${OS_REGION_NAME}/environ"
 }
 
 clean_vars() {
-    rm -f environ
+    rm -f ${OS_REGION_NAME}/environ
 }
 
 check_binary() {
@@ -30,7 +31,8 @@ random_string() {
 }
 
 gen_key() {
-    local key_path=/tmp/$(random_string)
+    mkdir -p ${OS_REGION_NAME}
+    local key_path=${OS_REGION_NAME}/$(random_string)
     ssh-keygen -N "" -q -f ${key_path} && echo ${key_path} || return 1
 }
 
@@ -42,12 +44,12 @@ terrapply() {
         key_pair=$(basename ${key_path} | cut -f1 -d'.')
         save_vars key_path
     fi
-    retry 3 terraform apply -var key_path=${key_path}.pub -var key_pair=${key_pair} -var-file=${CI_TERRAFORM_VARS} $@ || return 1
+    retry 3 terraform apply -var key_path=${key_path}.pub -var key_pair=${key_pair} -var-file=${CI_TERRAFORM_VARS} -state ${CI_TERRAFORM_STATE} $@ || return 1
 }
 
 terradestroy() {
     `get_vars`
-    retry 3 terraform destroy -var key_path=${key_path}.pub -var key_pair=${key_pair} -var-file=${CI_TERRAFORM_VARS} -force
+    retry 3 terraform destroy -var key_path=${key_path}.pub -var key_pair=${key_pair} -var-file=${CI_TERRAFORM_VARS} -state ${CI_TERRAFORM_STATE} -force
     rm -f ${key_path} ${key_path}.pub
     if [ ! $? -eq 0 ]; then
         return 1
@@ -84,7 +86,7 @@ delete_capture() {
 
 resource_id() {
     local name=$1
-    local id=$(cat terraform.tfstate | jq -r ".modules[].resources[\"${name}\"].primary.id")
+    local id=$(cat ${CI_TERRAFORM_STATE} | jq -r ".modules[].resources[\"${name}\"].primary.id")
     if [[ -z $id ]] || [[ $id == "null" ]]; then
 		>&2 runner_log_error "Can't find $name id in terraform state"
         return 1
@@ -100,7 +102,7 @@ vm_id() {
 
 fuzzy_resource_ids() {
     local name=$1
-    local matches=$(cat terraform.tfstate | jq -r ".modules[].resources | keys[] | select(contains(\"${name}\"))")
+    local matches=$(cat ${CI_TERRAFORM_STATE} | jq -r ".modules[].resources | keys[] | select(contains(\"${name}\"))")
     for match in $matches
     do
         id=$(resource_id ${match}) || return 1
@@ -117,7 +119,7 @@ port_interface_name() {
 
 port_fixed_ip() {
     local name=$1
-    local fixed_ip=$(cat terraform.tfstate | jq -r ".modules[].resources[\"openstack_networking_port_v2.${name}\"].primary.attributes[\"fixed_ip.0.ip_address\"]")
+    local fixed_ip=$(cat ${CI_TERRAFORM_STATE} | jq -r ".modules[].resources[\"openstack_networking_port_v2.${name}\"].primary.attributes[\"fixed_ip.0.ip_address\"]")
     if [[ -z $fixed_ip ]] || [[ $fixed_ip == "null" ]]; then
         >&2 runner_log_error "Can't find $name IP in terraform state"
         return 1
@@ -127,7 +129,7 @@ port_fixed_ip() {
 
 fip_ip() {
     local name=$1
-    local ip=$(cat terraform.tfstate | jq -r ".modules[].resources[\"openstack_networking_floatingip_v2.${name}\"].primary.attributes.address")
+    local ip=$(cat ${CI_TERRAFORM_STATE} | jq -r ".modules[].resources[\"openstack_networking_floatingip_v2.${name}\"].primary.attributes.address")
     if [[ -z $ip ]] || [[ $ip == "null" ]]; then
         >&2 runner_log_error "Can't find $name IP in terraform state"
         return 1
@@ -137,7 +139,7 @@ fip_ip() {
 
 fip_port_id() {
     local name=$1
-    local port_id=$(cat terraform.tfstate | jq -r ".modules[].resources[\"openstack_networking_floatingip_v2.${name}\"].primary.attributes.port_id")
+    local port_id=$(cat ${CI_TERRAFORM_STATE} | jq -r ".modules[].resources[\"openstack_networking_floatingip_v2.${name}\"].primary.attributes.port_id")
     if [[ -z $port_id ]] || [[ $port_id == "null" ]]; then
         >&2 runner_log_error "Can't find $name port_id in terraform state"
         return 1

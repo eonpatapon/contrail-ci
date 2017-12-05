@@ -5,6 +5,9 @@ set -e
 source ../../common/common.sh
 source ../../common/runner.sh
 
+check_binary curl
+check_binary neutron
+
 task_default() {
     runner_sequence setup wait_backends start_traffic disable_vm1 stop_traffic check_traffic
     result=${?}
@@ -13,6 +16,7 @@ task_default() {
 }
 
 task_setup() {
+    clean_vars
     terrapply || return 1
 }
 
