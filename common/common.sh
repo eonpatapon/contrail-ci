@@ -59,7 +59,7 @@ terradestroy() {
 gremlin() {
     local query=$1
     >&2 runner_log_notice "Sending query : $query"
-    result=$(skydive -c ${CI_SKYDIVE_CONF} client topology query --gremlin "$1") || return 1
+    result=$(skydive -c ${CI_SKYDIVE_CONF} client query "$1") || return 1
     >&2 runner_log_notice "Query result : $result"
     echo $result
 }
