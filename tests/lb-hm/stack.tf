@@ -86,8 +86,8 @@ resource "openstack_lb_pool_v1" "lb_hm_pool" {
 resource "openstack_lb_monitor_v1" "lb_hm_monitor" {
   region = "${var.region}"
   type = "HTTP"
-  delay = 5
-  timeout = 2
+  delay = 1
+  timeout = 1
   max_retries = 3
   admin_state_up = "true"
   url_path = "/"
@@ -105,7 +105,7 @@ resource "openstack_lb_vip_v1" "lb_hm_vip" {
   admin_state_up = "true"
 }
 
-resource "openstack_lb_member_v1" "lb_member" {
+resource "openstack_lb_member_v1" "lb_hm_member" {
   pool_id = "${openstack_lb_pool_v1.lb_hm_pool.id}"
   address = "${openstack_networking_port_v2.lb_hm_port.*.fixed_ip.0.ip_address[count.index]}"
   port = 80

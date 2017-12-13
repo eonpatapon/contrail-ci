@@ -42,28 +42,30 @@ task_teardown() {
 }
 
 gen_trafic() {
-    `get_vars`
+    local fip=${1}
     while ${generate}
     do
         `get_vars`
-        curl --connect-timeout 0.5 ${1} >/dev/null 2>&1
+        curl --connect-timeout 0.5 --max-time 2 ${1} >/dev/null 2>&1
         if [ $? -eq 0 ]; then
             success=$((success+1))
+            echo -n "."
         else
-            errors=$((errors))
+            errors=$((errors+1))
+            echo -n "!"
         fi
         save_vars success errors
     done
+    echo ""
 }
 
 task_start_traffic() {
     fip=$(fip_ip "lb_hm_fip_vip") || return 1
+    generate=true
     success=0
     errors=0
-    generate=true
     save_vars generate success errors
     gen_trafic ${fip} &
-    sleep 2
 }
 
 task_disable_vm1() {
@@ -77,14 +79,15 @@ task_enable_vm1() {
 }
 
 task_stop_traffic() {
+    sleep 8
     generate=false
     save_vars generate
-    sleep 5
+    sleep 1
 }
 
 task_check_traffic() {
     `get_vars`
-    if [ $errors -gt 0 ]; then
+    if [ $errors -gt 3 ]; then
         runner_log_error "$errors requests failed ($success ok)"
         return 1
     fi
