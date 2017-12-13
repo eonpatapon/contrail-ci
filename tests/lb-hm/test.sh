@@ -11,7 +11,7 @@ check_binary neutron
 task_default() {
     runner_sequence setup wait_backends start_traffic disable_vm1 stop_traffic check_traffic
     result=${?}
-    runner_sequence teardown
+    runner_sequence enable_vm1 teardown
     return $result
 }
 
@@ -71,6 +71,11 @@ task_disable_vm1() {
     runner_run neutron port-update --security-group lb_hm_secgroup_no_http ${port_id}
 }
 
+task_enable_vm1() {
+    port_id=$(resource_id "openstack_networking_port_v2.lb_hm_port.0") || return 1
+    runner_run neutron port-update --security-group lb_hm_secgroup ${port_id}
+}
+
 task_stop_traffic() {
     generate=false
     save_vars generate
@@ -79,9 +84,9 @@ task_stop_traffic() {
 
 task_check_traffic() {
     `get_vars`
-    if [ $errors -gt 1 ]; then
+    if [ $errors -gt 0 ]; then
         runner_log_error "$errors requests failed ($success ok)"
-    else
-        runner_log_success "$errors requests failed ($success ok)"
+        return 1
     fi
+    runner_log_success "$errors requests failed ($success ok)"
 }
