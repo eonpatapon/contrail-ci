@@ -33,11 +33,11 @@ task_wait_backend_1() {
 
 task_destroy() {
     terradestroy || return 1
+    clean_vars
 }
 
 task_teardown() {
     runner_parallel destroy
-    clean_vars
 }
 
 gen_trafic() {

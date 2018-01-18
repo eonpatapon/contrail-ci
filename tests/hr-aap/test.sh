@@ -19,6 +19,7 @@ task_setup() {
 
 task_destroy() {
     terradestroy || return 1
+    clean_vars
 }
 
 task_teardown() {

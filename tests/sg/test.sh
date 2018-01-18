@@ -18,11 +18,11 @@ task_setup() {
 
 task_destroy() {
     terradestroy || return 1
+    clean_vars
 }
 
 task_teardown() {
     runner_parallel delete_capture destroy
-    clean_vars
 }
 
 task_capture() {

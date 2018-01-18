@@ -21,11 +21,11 @@ task_setup() {
 
 task_destroy() {
     terradestroy || return 1
+    clean_vars
 }
 
 task_teardown() {
     runner_sequence remove_sg_vip destroy
-    clean_vars
 }
 
 task_wait_backends() {
