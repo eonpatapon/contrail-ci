@@ -42,7 +42,7 @@ terrapply() {
     if [ -z ${key_path} ]; then
         key_path=$(gen_key) || return 1
         key_pair=$(basename ${key_path} | cut -f1 -d'.')
-        save_vars key_path
+        save_vars key_path key_pair
     fi
     retry 3 terraform apply -var key_path=${key_path}.pub -var key_pair=${key_pair} -var-file=${CI_TERRAFORM_VARS} -state ${CI_TERRAFORM_STATE} $@ || return 1
 }

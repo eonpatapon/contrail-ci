@@ -16,7 +16,6 @@ task_default() {
 }
 
 task_setup() {
-    clean_vars
     terrapply || return 1
 }
 
